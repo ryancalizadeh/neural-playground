@@ -16,41 +16,51 @@ def sig_p(z: np.ndarray) -> np.ndarray:
 def ff(
     x: np.ndarray,
     theta0: np.ndarray,
-    theta1: np.ndarray
+    theta1: np.ndarray,
+    theta2: np.ndarray
 ) -> np.ndarray:
     a0 = np.matmul(theta0, x)
     h0 = sig(a0)
     a1 = np.matmul(theta1, h0)
     h1 = sig(a1)
-    return h1
+    a2 = np.matmul(theta2, h1)
+    h2 = sig(a2)
+    return h2
 
 def cost(
     x: np.ndarray,
     y: np.ndarray,
     theta0: np.ndarray,
-    theta1: np.ndarray
+    theta1: np.ndarray,
+    theta2: np.ndarray
 ) -> float:
-    return 0.5 * np.sum((ff(x, theta0, theta1) - y) ** 2)
+    return 0.5 * np.sum((ff(x, theta0, theta1, theta2) - y) ** 2)
 
 def get_grad(
     x: np.ndarray,
     y: np.ndarray,
     theta0: np.ndarray,
-    theta1: np.ndarray
+    theta1: np.ndarray,
+    theta2: np.ndarray
 ) -> tuple:
     a0 = np.matmul(theta0, x)
     h0 = sig(a0)
     a1 = np.matmul(theta1, h0)
     h1 = sig(a1)
-    diff = h1 - y
+    a2 = np.matmul(theta2, h1)
+    h2 = sig(a2)
+    diff = h2 - y
     j = 0.5 * np.sum(diff ** 2)
 
-    prod = np.multiply(diff, sig_p(a1))
+    d1 = np.multiply(diff, sig_p(a2))
+    d2 = np.multiply(np.matmul(theta2.T, d1), sig_p(a1))
+    d3 = np.multiply(np.matmul(theta1.T, d2), sig_p(a0))
 
-    theta1_grad = np.matmul(prod, h0.T)
-    theta0_grad = np.matmul(np.multiply(np.matmul(theta1.T, prod), sig_p(a0)), x.T)
+    theta2_grad = np.matmul(d1, h1.T)
+    theta1_grad = np.matmul(d2, h0.T)
+    theta0_grad = np.matmul(d3, x.T)
 
-    return theta0_grad, theta1_grad, j
+    return theta0_grad, theta1_grad, theta2_grad, j
 
 def main():
     print("Preprocessing")
@@ -68,18 +78,20 @@ def main():
     print("Training")
 
     init_size = 0.5
-    alpha = 0.005
-    group_size = 3000
+    alpha = 0.008
+    group_size = 1000
     cycles = 175
 
-    theta0 = (np.random.random((16, 784)) - 0.5) * 2 * init_size
-    theta1 = (np.random.random((10, 16)) - 0.5) * 2 * init_size
+    theta0 = (np.random.random((32, 784)) - 0.5) * 2 * init_size
+    theta1 = (np.random.random((16, 32)) - 0.5) * 2 * init_size
+    theta2 = (np.random.random((10, 16)) - 0.5) * 2 * init_size
 
-    print(x.shape) # (60000, 784)
+    print(x.shape)# (60000, 784)
     print(y.shape) # (60000, 10)
 
     theta0_grad_sum = np.zeros(theta0.shape)
     theta1_grad_sum = np.zeros(theta1.shape)
+    theta2_grad_sum = np.zeros(theta2.shape)
     cost_sum = 0
     costs = []
 
@@ -93,18 +105,21 @@ def main():
         if i % group_size == 0:
             theta0 -= alpha * theta0_grad_sum
             theta1 -= alpha * theta1_grad_sum
+            theta2 -= alpha * theta2_grad_sum
             print("avg cost: ", cost_sum/group_size)
             costs.append(cost_sum)
             
             theta0_grad_sum = np.zeros(theta0.shape)
             theta1_grad_sum = np.zeros(theta1.shape)
+            theta2_grad_sum = np.zeros(theta2.shape)
             cost_sum = 0
             cycle += 1
 
 
-        theta0_grad, theta1_grad, j = get_grad(x[i:i+1, :].T, y[i:i+1, :].T, theta0, theta1)
+        theta0_grad, theta1_grad, theta2_grad, j = get_grad(x[i:i+1, :].T, y[i:i+1, :].T, theta0, theta1, theta2)
         theta0_grad_sum += theta0_grad
         theta1_grad_sum += theta1_grad
+        theta2_grad_sum += theta2_grad
         cost_sum += j
 
         i += 1
@@ -117,7 +132,7 @@ def main():
     plt.imshow(img, cmap='gray')
     plt.show()
     print(y[sample])
-    print(ff(x[sample], theta0, theta1))
+    print(ff(x[sample], theta0, theta1, theta2))
 
     plt.scatter(np.arange(len(costs)), costs)
     plt.show()
@@ -127,6 +142,8 @@ def main():
     json.to_json("theta0.json", df)
     df = pd.DataFrame(theta1)
     json.to_json("theta1.json", df)
+    df = pd.DataFrame(theta2)
+    json.to_json("theta2.json", df)
 
 
 ## TO DO ##
@@ -137,6 +154,8 @@ def main():
 # Try test dataset
 # Look into regularization
 # Fiddle with step size, epsilon, batch size, etc. 
+# Check out:
+#   Goodfellow, Ian; Bengio, Yoshua; Courville, Aaron (2016). "6.5 Back-Propagation and Other Differentiation Algorithms". Deep Learning. MIT Press. pp. 200–220. ISBN 9780262035613.
     
 
 
