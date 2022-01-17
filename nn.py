@@ -77,26 +77,23 @@ def main():
 
     print("Training")
 
-    init_size = 0.5
+    init_size = 1
     alpha = 0.008
-    group_size = 1000
-    cycles = 175
+    group_size = 100
+    cycles = 2000
 
     theta0 = (np.random.random((32, 784)) - 0.5) * 2 * init_size
     theta1 = (np.random.random((16, 32)) - 0.5) * 2 * init_size
     theta2 = (np.random.random((10, 16)) - 0.5) * 2 * init_size
 
-    print(x.shape)# (60000, 784)
-    print(y.shape) # (60000, 10)
+    # print(x.shape) (60000, 784)
+    # print(y.shape) (60000, 10)
 
     theta0_grad_sum = np.zeros(theta0.shape)
     theta1_grad_sum = np.zeros(theta1.shape)
     theta2_grad_sum = np.zeros(theta2.shape)
     cost_sum = 0
     costs = []
-
-    print(x[5:6, :].shape)
-    print(y[5:6, :].shape)
 
     i = 0
     cycle = 0
@@ -106,7 +103,7 @@ def main():
             theta0 -= alpha * theta0_grad_sum
             theta1 -= alpha * theta1_grad_sum
             theta2 -= alpha * theta2_grad_sum
-            print("avg cost: ", cost_sum/group_size)
+            print(f"Cycle {cycle} avg cost: {cost_sum/group_size}")
             costs.append(cost_sum)
             
             theta0_grad_sum = np.zeros(theta0.shape)
@@ -123,7 +120,7 @@ def main():
         cost_sum += j
 
         i += 1
-        if i == n:
+        if i >= n-10000:
             i = 0
     
     sample = 7687
@@ -137,6 +134,17 @@ def main():
     plt.scatter(np.arange(len(costs)), costs)
     plt.show()
     
+    print("Testing")
+    cost_sum = 0
+    for i in range(n-10000):
+        cost_sum += cost(x[i:i+1, :].T, y[i:i+1, :].T, theta0, theta1, theta2)
+    print("Training cost: ", cost_sum/(n-10000))
+
+    cost_sum = 0
+    for i in range(n-10000, n):
+        cost_sum += cost(x[i:i+1, :].T, y[i:i+1, :].T, theta0, theta1, theta2)
+    print("Testing cost: ", cost_sum/10000)
+
     print("Wrapping up")
     df = pd.DataFrame(theta0)
     json.to_json("theta0.json", df)
@@ -148,8 +156,9 @@ def main():
 
 ## TO DO ##
 # Add comments
+# Fstring printing
 # Add Biases
-# Add layer(s)
+# Allow custom architecture
 # Add convolutions
 # Try test dataset
 # Look into regularization
