@@ -5,4 +5,4 @@ The motivation behind this project was that I wanted to implement the math behin
 
 ![image](https://user-images.githubusercontent.com/31375351/149883703-cb1a3620-64f3-4282-87fb-ef610a24d6c9.png)
 
-This is the visualization of the weights from the input layer to a node in the first layer of one of the models that was trained. Here, the brightness of a pixel in the 28x28 image represents the weight from the corresponding pixel in the input to the given node. You can make out a circle shape in the pattern here, which might suggest the network is conducting some crude feature extraction.
+This is the visualization of the weights from the input layer to a node in the first layer of one of the models that was trained. Here, the brightness of a pixel in the 28x28 image represents the weight from the corresponding pixel in an input image to the given node. You can make out a circle shape in the pattern here, which might suggest the network is conducting some crude feature extraction.
